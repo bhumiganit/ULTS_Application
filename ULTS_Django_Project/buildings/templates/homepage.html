@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://unpkg.com/shapefile@0.6"></script>
+    <title>ULTS Application</title>
+</head>
+<style>
+    table,
+    th {
+        border: 1px solid rgba(12, 0, 0, 0.095);
+    }
+
+    td {
+        border: 1px solid rgba(12, 0, 0, 0.095);
+    }
+
+    table {
+        width: 100%;
+        background-color: rgb(190, 181, 174);
+    }
+
+    div {
+        overflow-y: scroll;
+        height: 350px;
+        display: block;
+        /*overflow: hidden;*/
+        
+    }
+    .upDiv{
+        margin: auto;
+        width: 80%;
+        padding: 10px;
+        overflow: hidden;
+        background-color: rgb(190, 181, 174);
+
+    }
+    caption,td,th{
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    }
+    th,td{
+        font-size: large;
+    }
+    button{
+        background-color: rgba(240, 111, 12, 0.539);
+        padding:10px;
+        border: 0px solid white;
+        border-radius: 5px;
+        font-size: larger;
+    }
+    button:hover{
+        background-color: white;
+    }
+    #file1{
+        background-color: rgba(127, 255, 212, 0.666);
+        border-radius: 5px;
+    }
+    input{
+        padding: 4px;
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        font-size: large;
+    }
+    .checkbox{
+        width: 50px;
+        height: 50px;
+    }
+    
+</style>
+
+<body style="background-color: rgba(164, 159, 159, 0.293);">
+    <h1 style="text-align: center;font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;">ULTS Application</h1>
+    <div>
+        <table class="building_table" id="building_table">
+            <caption style="font-size: x-large;font-weight: bolder;">Building/Property Information Table <br> <p style="font-size: small;">Important Note: While Creating/Updating <b>Building Location</b> please provide latitude and longitude as following example : <b>17.74,74.33</b></p></caption>
+            <br>
+            
+            <thead>
+                <tr>
+                    <td style="border:0px solid white">
+                        <button id="AddRowButton" onclick="addRow()" style="width:100%;height: 50%;">Add Row</button>
+                    </td>
+                    <td style="border:0px solid white">
+                        <button id="updateRowButton" onclick="updateRow()" style="width:100%;height: 50%;">Update/Edit Row</button>
+                    </td>
+                    <td style="border:0px solid white">
+                        <button id="deleteRowButton" onclick="deleteRow()" style="width:100%;height: 50%;">Delete Row</button>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="building_table_head">Serial Number</th>
+                    <th class="building_table_head">Building Name</th>
+                    <th class="building_table_head">Building Address</th>
+                    <th class="building_table_head">Building Number</th>
+                    <th class="building_table_head">Building Location</th>
+                    <th class="building_table_head">Confirm</th>
+                </tr>
+            </thead>
+            <tbody class="building_table_body" id="building_table_body">
+
+
+                {% for bld_data in buildingData %}
+
+                <tr id=tag{{forloop.counter}}>
+                    <td>{{bld_data.Serial_Number }}</td>
+                    <td> <input type="text" name="" id="buildingName_{{bld_data.Serial_Number }}"
+                            value="{{bld_data.Name_of_Building}}" style="border:0px solid white">
+                    </td>
+                    <td><input type="text" name="" id="buildingAddress_{{bld_data.Serial_Number }}"
+                            value="{{bld_data.Location}}" style="border:0px solid white">
+                    </td>
+                    <td><input type="text" name="" id="buildingNumber_{{bld_data.Serial_Number }}"
+                            value="{{bld_data.Building_Number}}" style="border:0px solid white">
+                    </td>
+                    <td><input type="text" name="" id="buildingLocation_{{bld_data.Serial_Number }}"
+                            value="{{bld_data.GeometricLocation}}" style="border:0px solid white">
+                    </td>
+                    <td><input type="checkbox" id="{{bld_data.Serial_Number }}" class="checkBox" style="width: 30px;height: 30px;"></td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+    <br>
+    <br>
+
+    <div  class="upDiv">
+        <h3 style="text-align: center;font-size: xx-large;font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;">Upload Shape File</h3>
+        <form action="/uploadshpfile" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+                <span style="display: block;text-align: center;" ><input type="file" name="file1" id="file1" multiple style="font-size: large;font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;padding: 10px;"> <button type="submit">Upload File to Database</button></span> 
+        </form>
+    </div>
+
+
+    <script>
+
+        function getRowSerialNumber(c, rowE1, checkboxE1,
+            buildingNameE1, buildingAddressE1, buildingNumberE1, buildingLocationE1) {
+            $.ajax({
+                type: "GET",
+                url: "/getRowSerialNumber",
+                success: function (response) {
+                    let rowSerialNumber = JSON.parse(response)["rowNumber"]
+                    console.log(rowSerialNumber)
+                    c.innerHTML = rowSerialNumber
+                    rowE1.id = "row_" + rowSerialNumber
+                    checkboxE1.id = rowSerialNumber
+                    
+
+                    buildingNameE1.id = "buildingName_" + rowSerialNumber
+                    buildingAddressE1.id = "buildingAddress_" + rowSerialNumber
+                    buildingNumberE1.id = "buildingNumber_" + rowSerialNumber
+                    buildingLocationE1.id = "buildingLocation_" + rowSerialNumber
+                },
+            })
+        }
+
+
+        function rowCreate(k, rowE, checkboxE, buildingNameE, buildingAddressE, buildingNumberE, buildingLocationE) {
+            $.ajax({
+                type: "GET",
+                url: "/addRow",
+                success: function (response) {
+                    let rowCreatedInfo = JSON.parse(response)["rowAdd"]
+                    console.log(rowCreatedInfo)
+                    getRowSerialNumber(k, rowE, checkboxE, buildingNameE, buildingAddressE, buildingNumberE, buildingLocationE)
+
+                },
+
+            })
+
+        }
+
+        function updateRow() {
+            var inputs1 = document.querySelectorAll('.checkBox');
+
+            console.log("Query selector-", inputs1)
+            var checklist = [];
+
+            for (var i = 0; i < inputs1.length; i++) {
+                console.log(inputs1[i])
+                var el = document.getElementById(inputs1[i].id)
+
+                if (el.checked) {
+                    let rowData = document.getElementById("row_" + inputs1[i].id)
+                    let buildingName_ = document.getElementById("buildingName_" + inputs1[i].id)
+                    let buildingAddress_ = document.getElementById("buildingAddress_" + inputs1[i].id)
+                    let buildingNumber_ = document.getElementById("buildingNumber_" + inputs1[i].id)
+                    let buildingLocation_ = document.getElementById("buildingLocation_" + inputs1[i].id)
+                    console.log(buildingName_.value, buildingAddress_.value, buildingNumber_.value, buildingLocation_.value)
+
+                    $.ajax({
+                        type: "GET",
+                        url: "/updateBuildingData",
+                        data: {
+                            'buildingSerialNumber': inputs1[i].id,
+                            'buildingName_': buildingName_.value, 'buildingAddress_': buildingAddress_.value, 'buildingNumber_': buildingNumber_.value,
+                            'buildingLocation_': buildingLocation_.value
+                        },
+                        success: console.log("successfully,Data Sent!")
+                    })
+                }
+
+            }
+
+        }
+
+        function deleteRow() {
+            var inputs2 = document.querySelectorAll('.checkBox');
+
+            console.log("Query selector-", inputs2)
+            var checklist2 = [];
+            let counter = 0
+            for (var i = 0; i < inputs2.length; i++) {
+                console.log(inputs2[i])
+                var el2 = document.getElementById(inputs2[i].id)
+                counter++
+
+                console.log("counter : ", counter)
+                if (el2.checked) {
+                    let rowData = document.getElementById("row_" + inputs2[i].id)
+                    let buildingName_ = document.getElementById("buildingName_" + inputs2[i].id)
+                    let buildingAddress_ = document.getElementById("buildingAddress_" + inputs2[i].id)
+                    let buildingNumber_ = document.getElementById("buildingNumber_" + inputs2[i].id)
+                    let buildingLocation_ = document.getElementById("buildingLocation_" + inputs2[i].id)
+                    console.log(buildingName_.value, buildingAddress_.value, buildingNumber_.value, buildingLocation_.value)
+
+                    $.ajax({
+                        type: "GET",
+                        url: "/deleteRow",
+                        data: {
+                            'buildingSerialNumber': inputs2[i].id
+                        },
+                        success: function (response) {
+                            console.log("successfully,Data Sent!");
+                            window.location.reload();
+                        }
+                    })
+                }
+
+            }
+
+        }
+
+
+        function addRow() {
+            var buildingTable = document.getElementById("building_table")
+            var buildingTableBody = document.getElementById("building_table_body")
+
+            //creatinng input elements to read
+            var buildingName = document.createElement('input')
+            buildingName.type = "text"
+            buildingName.id = "buildingName"
+            buildingName.placeholder = "buildingName"
+            buildingName.style.border = "0px solid white"
+            var buildingAddress = document.createElement('input')
+            buildingAddress.type = "text"
+            buildingAddress.id = "buildingAddress"
+            buildingAddress.placeholder = "buildingAddress"
+            buildingAddress.style.border = "0px solid white"
+            var buildingNumber = document.createElement('input')
+            buildingNumber.type = "number"
+            buildingNumber.id = "buildingNumber"
+            buildingNumber.placeholder = 0
+            buildingNumber.style.border = "0px solid white"
+            var buildingLocation = document.createElement('input')
+            buildingLocation.type = "text"
+            buildingLocation.id = "buildingLocation"
+            buildingLocation.placeholder = "17.64,73.30(latitude,longitude)"
+            buildingLocation.style.border = "0px solid white"
+
+            var buildingUpdate = document.createElement('button')
+            buildingUpdate.id = "buildingUpdate"
+            // buildingUpdate.onclick = updateRow()
+            buildingUpdate.innerText = "Update/Edit"
+
+            var buildingDelete = document.createElement('button')
+            buildingDelete.id = "buildingDelete"
+            // buildingDelete.onclick = deleteRow()
+            buildingDelete.innerText = "Delete"
+
+            var buildingConfirm = document.createElement('input')
+            buildingConfirm.type = "checkbox"
+            buildingConfirm.className = "checkBox"
+            buildingConfirm.style.height = "30px"
+            buildingConfirm.style.width = "30px"
+
+            var row = buildingTable.insertRow(-1);
+
+            var cell0 = row.insertCell(0);
+            var cell1 = row.insertCell(1);
+            var cell2 = row.insertCell(2);
+            var cell3 = row.insertCell(3);
+            var cell4 = row.insertCell(4);
+            var cell5 = row.insertCell(5);
+
+
+            cell0.innerHTML = 0
+            cell1.appendChild(buildingName)
+            cell2.appendChild(buildingAddress)
+            cell3.appendChild(buildingNumber)
+            cell4.appendChild(buildingLocation)
+            cell5.appendChild(buildingConfirm)
+            rowCreate(cell0, row, buildingConfirm,
+                buildingName, buildingAddress, buildingNumber, buildingLocation)
+        }
+
+        function uploadFile(){
+            var file = document.querySelector("#file1").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            $.ajax({
+                type: "POST",
+                url: "/uploadshpfile",
+                success: function (response) {
+                    console.log(JSON.parse(response)["info"])
+                   
+
+                },
+
+            })
+
+        }
+
+    </script>
+
+
+
+</body>
+
+</html>
