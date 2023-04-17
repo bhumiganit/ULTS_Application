@@ -37,26 +37,36 @@ def getRowSerialNumber(request):
 
 def updateBuildingData(request):
     print("updating Building")
-    buildingSerialNumber = request.GET.get('buildingSerialNumber')
-    buildingName_ = request.GET.get('buildingName_')
-    buildingAddress_ = request.GET.get('buildingAddress_')
-    buildingNumber_ = request.GET.get('buildingNumber_')
-    buildingLocation_ = request.GET.get('buildingLocation_')
-    lat = buildingLocation_.split(",")[0]
-    long = buildingLocation_.split(",")[1]
-    pnt = GEOSGeometry(f"POINT({long} {lat})")
-    if Building_Details.objects.filter(Serial_Number=buildingSerialNumber).exists():
-        Building_Details.objects.filter(Serial_Number=buildingSerialNumber).update(Name_of_Building=buildingName_,
-                                                                                   Location=buildingAddress_,
-                                                                                   Building_Number = buildingNumber_,
-                                                                                   GeometricLocation = pnt)
-        returnData = {"info":"Building data updated Successfully!"}
-        datacontext = json.dumps(returnData)
-        return JsonResponse(datacontext,safe=False)
-    else:
-        returnData = {"info":"Building data updated failed\nPlease check your Database!"}
-        datacontext = json.dumps(returnData)
-        return JsonResponse(datacontext,safe=False)
+    try:
+        buildingSerialNumber = request.GET.get('buildingSerialNumber')
+        buildingName_ = request.GET.get('buildingName_')
+        buildingAddress_ = request.GET.get('buildingAddress_')
+        buildingNumber_ = request.GET.get('buildingNumber_')
+        buildingLocation_ = request.GET.get('buildingLocation_')
+        if buildingLocation_.count('SRID') == 0:
+            lat = buildingLocation_.split(",")[0]
+            long = buildingLocation_.split(",")[1]
+            pnt = GEOSGeometry(f"POINT({long} {lat})")
+        elif buildingLocation_.count('SRID') == 1:
+            lat = buildingLocation_.split('(')[-1].split(')')[0].split(" ")[1]
+            long = buildingLocation_.split('(')[-1].split(')')[0].split(" ")[0]
+            pnt = GEOSGeometry(f"POINT({long} {lat})") 
+              
+        if Building_Details.objects.filter(Serial_Number=buildingSerialNumber).exists():
+            Building_Details.objects.filter(Serial_Number=buildingSerialNumber).update(Name_of_Building=buildingName_,
+                                                                                    Location=buildingAddress_,
+                                                                                    Building_Number = buildingNumber_,
+                                                                                    GeometricLocation = pnt)
+            returnData = {"info":"Building data updated Successfully!"}
+            datacontext = json.dumps(returnData)
+            return JsonResponse(datacontext,safe=False)
+        else:
+            returnData = {"info":"Building data updated failed\nPlease check your Database!"}
+            datacontext = json.dumps(returnData)
+            return JsonResponse(datacontext,safe=False)
+    except Exception as UpdateBuildingExp:
+        print(UpdateBuildingExp)
+        return HttpResponse(f"Error:{UpdateBuildingExp}\nPlease check your Input")
         
 def deleteRow(request):
     print("deleting a row")

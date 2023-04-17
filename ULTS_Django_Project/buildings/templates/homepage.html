@@ -204,12 +204,17 @@
                             'buildingName_': buildingName_.value, 'buildingAddress_': buildingAddress_.value, 'buildingNumber_': buildingNumber_.value,
                             'buildingLocation_': buildingLocation_.value
                         },
-                        success: console.log("successfully,Data Sent!")
+                        // success: console.log("successfully,Data Sent!")
+                        success: function (response) {
+                            console.log("successfully,Data Sent!");
+                            window.location.reload();
+                            
+                        }
                     })
                 }
 
             }
-
+            
         }
 
         function deleteRow() {
@@ -246,6 +251,7 @@
                 }
 
             }
+            window.location.reload();
 
         }
 
